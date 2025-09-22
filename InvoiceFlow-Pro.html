@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InvoiceFlow Pro | Professional Invoice Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #invoice-preview, #invoice-preview * {
+                visibility: visible;
+            }
+            #invoice-preview {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+        
+        .invoice-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .input-focus:focus {
+            ring-width: 2px;
+            ring-color: rgb(59 130 246);
+            border-color: rgb(59 130 246);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                        <i class='bx bx-receipt text-white text-xl'></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">InvoiceFlow Pro</h1>
+                        <p class="text-sm text-gray-500">Professional Invoice Generator</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="saveTemplate()" class="no-print px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2">
+                        <i class='bx bx-save'></i>
+                        <span>Save Template</span>
+                    </button>
+                    <button onclick="newInvoice()" class="no-print px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2">
+                        <i class='bx bx-plus'></i>
+                        <span>New Invoice</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Input Form Column -->
+            <div class="no-print space-y-6">
+                <!-- Company Details Card -->
+                <div class="bg-white rounded-xl p-6 invoice-shadow animate-fade-in">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class='bx bx-building text-blue-600 mr-2'></i>
+                        Your Company Details
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+                            <input type="text" id="companyName" placeholder="Your Company Inc." class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="companyEmail" placeholder="contact@yourcompany.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                            <textarea id="companyAddress" placeholder="123 Business Ave&#10;City, State 12345" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" rows="3" oninput="updateInvoice()"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input type="tel" id="companyPhone" placeholder="+1 (555) 123-4567" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tax ID</label>
+                            <input type="text" id="companyTaxId" placeholder="123-45-6789" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Logo URL (optional)</label>
+                            <input type="url" id="companyLogo" placeholder="https://your-logo-url.com/logo.png" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Client Details Card -->
+                <div class="bg-white rounded-xl p-6 invoice-shadow animate-fade-in">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class='bx bx-user text-green-600 mr-2'></i>
+                        Client Details
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Name</label>
+                            <input type="text" id="clientName" placeholder="Client Company Ltd." class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Email</label>
+                            <input type="email" id="clientEmail" placeholder="client@company.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Address</label>
+                            <textarea id="clientAddress" placeholder="456 Client Street&#10;City, State 67890" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" rows="3" oninput="updateInvoice()"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Invoice Details Card -->
+                <div class="bg-white rounded-xl p-6 invoice-shadow animate-fade-in">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class='bx bx-file text-purple-600 mr-2'></i>
+                        Invoice Details
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
+                            <input type="text" id="invoiceNumber" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Issue Date</label>
+                            <input type="date" id="issueDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                            <input type="date" id="dueDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Line Items Card -->
+                <div class="bg-white rounded-xl p-6 invoice-shadow animate-fade-in">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i class='bx bx-list-ul text-orange-600 mr-2'></i>
+                            Line Items
+                        </h2>
+                        <button onclick="addLineItem()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                            <i class='bx bx-plus'></i>
+                            <span>Add Item</span>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-2 text-sm font-medium text-gray-700">Description</th>
+                                    <th class="text-center py-2 text-sm font-medium text-gray-700 w-20">Qty</th>
+                                    <th class="text-right py-2 text-sm font-medium text-gray-700 w-24">Unit Price</th>
+                                    <th class="text-right py-2 text-sm font-medium text-gray-700 w-24">Total</th>
+                                    <th class="w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="lineItemsTable">
+                                <!-- Line items will be dynamically added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Calculations Card -->
+                <div class="bg-white rounded-xl p-6 invoice-shadow animate-fade-in">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class='bx bx-calculator text-red-600 mr-2'></i>
+                        Calculations
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                            <input type="number" id="taxRate" placeholder="0" min="0" max="100" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Discount Amount ($)</label>
+                            <input type="number" id="discountAmount" placeholder="0" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg input-focus" oninput="updateInvoice()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="bg-white rounded-xl p-6 invoice-shadow animate-fade-in">
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="generatePDF()" class="btn-primary px-6 py-3 text-white rounded-lg font-medium flex items-center space-x-2">
+                            <i class='bx bx-download'></i>
+                            <span>Generate PDF</span>
+                        </button>
+                        <button onclick="printInvoice()" class="px-6 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center space-x-2">
+                            <i class='bx bx-printer'></i>
+                            <span>Print Invoice</span>
+                        </button>
+                        <button onclick="loadTemplate()" class="px-6 py-3 bg-yellow-600 text-white rounded-lg font-medium hover:bg-yellow-700 transition-colors flex items-center space-x-2">
+                            <i class='bx bx-upload'></i>
+                            <span>Load Template</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Preview Column -->
+            <div class="lg:sticky lg:top-8 lg:h-fit">
+                <div id="invoice-preview" class="bg-white rounded-xl p-8 invoice-shadow animate-fade-in">
+                    <!-- Invoice Header -->
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="flex items-center space-x-4">
+                            <div id="logoContainer" class="hidden">
+                                <img id="companyLogoImg" src="" alt="Logo" class="h-16 w-auto object-contain">
+                            </div>
+                            <div>
+                                <h1 class="text-3xl font-bold text-gray-900" id="previewCompanyName">Your Company</h1>
+                                <p class="text-gray-600" id="previewCompanyEmail">contact@yourcompany.com</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <h2 class="text-2xl font-bold text-blue-600">INVOICE</h2>
+                            <p class="text-gray-600">Invoice #<span id="previewInvoiceNumber">001</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Company and Client Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <h3 class="font-semibold text-gray-900 mb-2">From:</h3>
+                            <div class="text-gray-600">
+                                <p id="previewCompanyName2">Your Company</p>
+                                <div id="previewCompanyAddress" class="whitespace-pre-line">123 Business Ave
+City, State 12345</div>
+                                <p id="previewCompanyPhone">+1 (555) 123-4567</p>
+                                <p>Tax ID: <span id="previewCompanyTaxId">123-45-6789</span></p>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900 mb-2">To:</h3>
+                            <div class="text-gray-600">
+                                <p id="previewClientName">Client Company</p>
+                                <div id="previewClientAddress" class="whitespace-pre-line">456 Client Street
+City, State 67890</div>
+                                <p id="previewClientEmail">client@company.com</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Dates -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <p class="text-gray-600">Issue Date: <span id="previewIssueDate" class="font-medium text-gray-900">--</span></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Due Date: <span id="previewDueDate" class="font-medium text-gray-900">--</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Line Items Table -->
+                    <div class="mb-8">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b-2 border-gray-200">
+                                    <th class="text-left py-3 font-semibold text-gray-900">Description</th>
+                                    <th class="text-center py-3 font-semibold text-gray-900">Qty</th>
+                                    <th class="text-right py-3 font-semibold text-gray-900">Unit Price</th>
+                                    <th class="text-right py-3 font-semibold text-gray-900">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewLineItems">
+                                <tr>
+                                    <td colspan="4" class="py-8 text-center text-gray-500">No items added yet</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="flex justify-end">
+                        <div class="w-64">
+                            <div class="flex justify-between py-2 border-b border-gray-200">
+                                <span class="text-gray-600">Subtotal:</span>
+                                <span class="font-medium" id="previewSubtotal">$0.00</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-200">
+                                <span class="text-gray-600">Tax (<span id="previewTaxRate">0</span>%):</span>
+                                <span class="font-medium" id="previewTaxAmount">$0.00</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-200">
+                                <span class="text-gray-600">Discount:</span>
+                                <span class="font-medium" id="previewDiscount">-$0.00</span>
+                            </div>
+                            <div class="flex justify-between py-3 border-t-2 border-gray-900">
+                                <span class="text-xl font-bold text-gray-900">Total:</span>
+                                <span class="text-xl font-bold text-gray-900" id="previewTotal">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="mt-12 pt-8 border-t border-gray-200">
+                        <p class="text-center text-gray-500 text-sm">Thank you for your business!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Invoice data model
+        let invoiceData = {
+            company: {
+                name: '',
+                email: '',
+                address: '',
+                phone: '',
+                taxId: '',
+                logo: ''
+            },
+            client: {
+                name: '',
+                email: '',
+                address: ''
+            },
+            invoice: {
+                number: '',
+                issueDate: '',
+                dueDate: ''
+            },
+            lineItems: [],
+            taxRate: 0,
+            discountAmount: 0
+        };
+
+        // Initialize the application
+        function initializeApp() {
+            // Set default invoice number
+            const today = new Date();
+            const invoiceNumber = 'INV-' + today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0') + '-001';
+            document.getElementById('invoiceNumber').value = invoiceNumber;
+            
+            // Set default dates
+            document.getElementById('issueDate').value = today.toISOString().split('T')[0];
+            const dueDate = new Date(today);
+            dueDate.setDate(dueDate.getDate() + 30);
+            document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
+            
+            // Add initial line item
+            addLineItem();
+            updateInvoice();
+        }
+
+        // Update the invoice preview
+        function updateInvoice() {
+            // Update company info
+            invoiceData.company.name = document.getElementById('companyName').value || 'Your Company';
+            invoiceData.company.email = document.getElementById('companyEmail').value || 'contact@yourcompany.com';
+            invoiceData.company.address = document.getElementById('companyAddress').value || '123 Business Ave\nCity, State 12345';
+            invoiceData.company.phone = document.getElementById('companyPhone').value || '+1 (555) 123-4567';
+            invoiceData.company.taxId = document.getElementById('companyTaxId').value || '123-45-6789';
+            invoiceData.company.logo = document.getElementById('companyLogo').value;
+
+            // Update client info
+            invoiceData.client.name = document.getElementById('clientName').value || 'Client Company';
+            invoiceData.client.email = document.getElementById('clientEmail').value || 'client@company.com';
+            invoiceData.client.address = document.getElementById('clientAddress').value || '456 Client Street\nCity, State 67890';
+
+            // Update invoice details
+            invoiceData.invoice.number = document.getElementById('invoiceNumber').value || '001';
+            invoiceData.invoice.issueDate = document.getElementById('issueDate').value;
+            invoiceData.invoice.dueDate = document.getElementById('dueDate').value;
+
+            // Update tax rate and discount
+            invoiceData.taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+            invoiceData.discountAmount = parseFloat(document.getElementById('discountAmount').value) || 0;
+
+            // Update line items
+            updateLineItemsData();
+
+            // Render the preview
+            renderPreview();
+        }
+
+        // Update line items data from the form
+        function updateLineItemsData() {
+            const rows = document.querySelectorAll('#lineItemsTable tr');
+            invoiceData.lineItems = [];
+            
+            rows.forEach(row => {
+                const description = row.querySelector('.item-description')?.value || '';
+                const quantity = parseFloat(row.querySelector('.item-quantity')?.value) || 0;
+                const unitPrice = parseFloat(row.querySelector('.item-price')?.value) || 0;
+                
+                if (description || quantity || unitPrice) {
+                    invoiceData.lineItems.push({
+                        description,
+                        quantity,
+                        unitPrice,
+                        total: quantity * unitPrice
+                    });
+                }
+            });
+        }
+
+        // Render the invoice preview
+        function renderPreview() {
+            // Company info
+            document.getElementById('previewCompanyName').textContent = invoiceData.company.name;
+            document.getElementById('previewCompanyName2').textContent = invoiceData.company.name;
+            document.getElementById('previewCompanyEmail').textContent = invoiceData.company.email;
+            document.getElementById('previewCompanyAddress').textContent = invoiceData.company.address;
+            document.getElementById('previewCompanyPhone').textContent = invoiceData.company.phone;
+            document.getElementById('previewCompanyTaxId').textContent = invoiceData.company.taxId;
+
+            // Logo handling
+            const logoContainer = document.getElementById('logoContainer');
+            const logoImg = document.getElementById('companyLogoImg');
+            if (invoiceData.company.logo) {
+                logoImg.src = invoiceData.company.logo;
+                logoContainer.classList.remove('hidden');
+            } else {
+                logoContainer.classList.add('hidden');
+            }
+
+            // Client info
+            document.getElementById('previewClientName').textContent = invoiceData.client.name;
+            document.getElementById('previewClientEmail').textContent = invoiceData.client.email;
+            document.getElementById('previewClientAddress').textContent = invoiceData.client.address;
+
+            // Invoice details
+            document.getElementById('previewInvoiceNumber').textContent = invoiceData.invoice.number;
+            document.getElementById('previewIssueDate').textContent = formatDate(invoiceData.invoice.issueDate);
+            document.getElementById('previewDueDate').textContent = formatDate(invoiceData.invoice.dueDate);
+
+            // Line items
+            renderLineItems();
+
+            // Calculations
+            calculateTotals();
+        }
+
+        // Render line items in preview
+        function renderLineItems() {
+            const tbody = document.getElementById('previewLineItems');
+            
+            if (invoiceData.lineItems.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-8 text-center text-gray-500">No items added yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = invoiceData.lineItems.map(item => `
+                <tr class="border-b border-gray-100">
+                    <td class="py-3 text-gray-900">${item.description}</td>
+                    <td class="py-3 text-center text-gray-600">${item.quantity}</td>
+                    <td class="py-3 text-right text-gray-600">$${item.unitPrice.toFixed(2)}</td>
+                    <td class="py-3 text-right font-medium text-gray-900">$${item.total.toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Calculate totals
+        function calculateTotals() {
+            const subtotal = invoiceData.lineItems.reduce((sum, item) => sum + item.total, 0);
+            const taxAmount = subtotal * (invoiceData.taxRate / 100);
+            const total = subtotal + taxAmount - invoiceData.discountAmount;
+
+            document.getElementById('previewSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('previewTaxRate').textContent = invoiceData.taxRate.toFixed(1);
+            document.getElementById('previewTaxAmount').textContent = `$${taxAmount.toFixed(2)}`;
+            document.getElementById('previewDiscount').textContent = `-$${invoiceData.discountAmount.toFixed(2)}`;
+            document.getElementById('previewTotal').textContent = `$${total.toFixed(2)}`;
+        }
+
+        // Add a new line item
+        function addLineItem() {
+            const tbody = document.getElementById('lineItemsTable');
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-100';
+            
+            row.innerHTML = `
+                <td class="py-2">
+                    <input type="text" class="item-description w-full px-2 py-1 border border-gray-300 rounded input-focus" placeholder="Item description" oninput="updateInvoice()">
+                </td>
+                <td class="py-2">
+                    <input type="number" class="item-quantity w-full px-2 py-1 border border-gray-300 rounded text-center input-focus" placeholder="1" min="0" step="0.01" oninput="updateInvoice()">
+                </td>
+                <td class="py-2">
+                    <input type="number" class="item-price w-full px-2 py-1 border border-gray-300 rounded text-right input-focus" placeholder="0.00" min="0" step="0.01" oninput="updateInvoice()">
+                </td>
+                <td class="py-2 text-right font-medium item-total">$0.00</td>
+                <td class="py-2">
+                    <button onclick="removeLineItem(this)" class="text-red-600 hover:text-red-800 transition-colors">
+                        <i class='bx bx-trash'></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(row);
+            updateInvoice();
+        }
+
+        // Remove a line item
+        function removeLineItem(button) {
+            const row = button.closest('tr');
+            row.remove();
+            updateInvoice();
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            if (!dateString) return '--';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        // Generate PDF
+        function generatePDF() {
+            const element = document.getElementById('invoice-preview');
+            const opt = {
+                margin: 1,
+                filename: `invoice-${invoiceData.invoice.number}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // Print invoice
+        function printInvoice() {
+            window.print();
+        }
+
+        // Save template to localStorage
+        function saveTemplate() {
+            localStorage.setItem('invoiceTemplate', JSON.stringify(invoiceData));
+            alert('Template saved successfully!');
+        }
+
+        // Load template from localStorage
+        function loadTemplate() {
+            const saved = localStorage.getItem('invoiceTemplate');
+            if (saved) {
+                const data = JSON.parse(saved);
+                
+                // Load company data
+                document.getElementById('companyName').value = data.company.name || '';
+                document.getElementById('companyEmail').value = data.company.email || '';
+                document.getElementById('companyAddress').value = data.company.address || '';
+                document.getElementById('companyPhone').value = data.company.phone || '';
+                document.getElementById('companyTaxId').value = data.company.taxId || '';
+                document.getElementById('companyLogo').value = data.company.logo || '';
+
+                // Load client data
+                document.getElementById('clientName').value = data.client.name || '';
+                document.getElementById('clientEmail').value = data.client.email || '';
+                document.getElementById('clientAddress').value = data.client.address || '';
+
+                // Load rates
+                document.getElementById('taxRate').value = data.taxRate || '';
+                document.getElementById('discountAmount').value = data.discountAmount || '';
+
+                // Clear existing line items and load saved ones
+                document.getElementById('lineItemsTable').innerHTML = '';
+                if (data.lineItems && data.lineItems.length > 0) {
+                    data.lineItems.forEach(item => {
+                        addLineItem();
+                        const rows = document.querySelectorAll('#lineItemsTable tr');
+                        const lastRow = rows[rows.length - 1];
+                        lastRow.querySelector('.item-description').value = item.description;
+                        lastRow.querySelector('.item-quantity').value = item.quantity;
+                        lastRow.querySelector('.item-price').value = item.unitPrice;
+                    });
+                } else {
+                    addLineItem();
+                }
+
+                updateInvoice();
+                alert('Template loaded successfully!');
+            } else {
+                alert('No saved template found.');
+            }
+        }
+
+        // Start new invoice
+        function newInvoice() {
+            if (confirm('Are you sure you want to start a new invoice? All current data will be lost.')) {
+                // Clear all form fields
+                document.querySelectorAll('input, textarea').forEach(input => {
+                    if (input.type !== 'date' && input.id !== 'invoiceNumber') {
+                        input.value = '';
+                    }
+                });
+
+                // Reset line items
+                document.getElementById('lineItemsTable').innerHTML = '';
+                
+                // Reinitialize
+                initializeApp();
+            }
+        }
+
+        // Initialize the app when page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
